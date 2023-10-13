@@ -65,17 +65,16 @@ void renderScore(int p1_score, int p2_score)
     char scoreText[200];
     sprintf(scoreText, "%s: %d - %s: %d", player1_nickname, p1_score, player2_nickname, p2_score);
 
-    SDL_Color textColor = {255, 255, 255, 255}; // White color
+    SDL_Color textColor = {255, 255, 255, 255};
     SDL_Surface *textSurface = TTF_RenderText_Solid(font, scoreText, textColor);
     SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
 
     int textWidth = textSurface->w;
     int textHeight = textSurface->h;
 
-    SDL_Rect renderQuad = {(WINDOW_WIDTH - textWidth) / 2, 10, textWidth, textHeight}; // Position it at the top center
+    SDL_Rect renderQuad = {(WINDOW_WIDTH - textWidth) / 2, 10, textWidth, textHeight};
     SDL_RenderCopy(renderer, textTexture, NULL, &renderQuad);
 
-    // Cleanup
     SDL_FreeSurface(textSurface);
     SDL_DestroyTexture(textTexture);
     TTF_CloseFont(font);
@@ -84,10 +83,10 @@ void renderScore(int p1_score, int p2_score)
 void renderGame(float p1_y, float p2_y, float ball_x, float ball_y, int p1_score, int p2_score)
 {
 
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255); // Set background color to black
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
 
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255); // Set paddle and ball color to white
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 
     SDL_Rect paddle1Rect = {0, (int)p1_y, PADDLE_WIDTH, PADDLE_HEIGHT};
     SDL_Rect paddle2Rect = {WINDOW_WIDTH - PADDLE_WIDTH, (int)p2_y, PADDLE_WIDTH, PADDLE_HEIGHT};
@@ -112,7 +111,7 @@ void renderGameOver(int p1_score, int p2_score)
     }
 
     char gameOverText[] = "Game Over";
-    SDL_Color textColor = {255, 0, 0, 255}; // Red color
+    SDL_Color textColor = {255, 0, 0, 255};
     SDL_Surface *textSurface = TTF_RenderText_Solid(font, gameOverText, textColor);
     SDL_Texture *textTexture = SDL_CreateTextureFromSurface(renderer, textSurface);
 
@@ -142,7 +141,6 @@ void renderGameOver(int p1_score, int p2_score)
 
     SDL_RenderPresent(renderer);
 
-    // Cleanup
     SDL_FreeSurface(textSurface);
     SDL_DestroyTexture(textTexture);
     TTF_CloseFont(font);
@@ -161,7 +159,7 @@ int main(int argc, char *argv[])
 
     if (initSDL() != 0)
     {
-        return 1; // Exit if SDL initialization fails
+        return 1;
     }
 
     int clientSocket;
@@ -182,12 +180,12 @@ int main(int argc, char *argv[])
     char email[100];
 
     printf("Enter your nickname: ");
-    scanf("%49s", nickname); // Limit input to prevent buffer overflow
-    getchar();               // Consume newline
+    scanf("%49s", nickname);
+    getchar();
 
     printf("Enter your email: ");
     scanf("%99s", email);
-    getchar(); // Consume newline
+    getchar();
 
     sprintf(buffer, "REGISTRATION:NICKNAME:%s:EMAIL:%s", nickname, email);
     send(clientSocket, buffer, strlen(buffer) + 1, 0);
@@ -198,7 +196,7 @@ int main(int argc, char *argv[])
     printf("2. Player2\n");
     printf("Choice: ");
     scanf("%d", &choice);
-    getchar(); // consume newline
+    getchar();
 
     if (choice == 1)
     {
@@ -222,7 +220,6 @@ int main(int argc, char *argv[])
 
     send(clientSocket, playerID, strlen(playerID) + 1, 0);
 
-    // Receive acknowledgment or rejection from the server
     memset(buffer, 0, sizeof(buffer));
     if (recv(clientSocket, buffer, 1024, 0) <= 0)
     {
@@ -245,11 +242,9 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    // Inform server that client is ready
     send(clientSocket, "READY", 6, 0);
     printf("Waiting for other player...\n");
 
-    // Wait until both players are ready
     while (1)
     {
         memset(buffer, 0, sizeof(buffer));
@@ -265,20 +260,19 @@ int main(int argc, char *argv[])
 
         if (strcmp(buffer, "WAITING") == 0)
         {
-            continue; // Continue waiting
+            continue;
         }
         else
         {
-            break; // Exit loop and start game
+            break;
         }
     }
 
-    float p1_y, p2_y, ball_x, ball_y; // Declare here, once for the entire while loop
+    float p1_y, p2_y, ball_x, ball_y;
     int p1_score = 0, p2_score = 0;
 
     while (1)
     {
-        // Continuously check for updates from the server
         memset(buffer, 0, sizeof(buffer));
         int bytes_received = recv(clientSocket, buffer, 1024, 0);
         if (bytes_received <= 0)
@@ -287,21 +281,19 @@ int main(int argc, char *argv[])
             break;
         }
 
-        // Check for game over
         if (strcmp(buffer, "GAME:OVER") == 0)
         {
             printf("Game over!\n");
             renderGameOver(p1_score, p2_score);
-            SDL_Delay(5000); // Wait for 5 seconds
-            continue;        // Continue the game loop
+            SDL_Delay(5000);
+            continue;
         }
 
         int p1_score, p2_score;
         sscanf(buffer, "STATE:P1:%f,P2:%f,BALL:%f:%f,SCORE:P1:%d:P2:%d,NICKS:%49[^:]:%49s", &p1_y, &p2_y, &ball_x, &ball_y, &p1_score, &p2_score, player1_nickname, player2_nickname);
         renderGame(p1_y, p2_y, ball_x, ball_y, p1_score, p2_score);
-        printf("Scores - Player1: %d, Player2: %d\n", p1_score, p2_score); // Display scores in the terminal
+        printf("Scores - Player1: %d, Player2: %d\n", p1_score, p2_score);
 
-        // Handle SDL events (for actions and window close)
         SDL_Event e;
         while (SDL_PollEvent(&e) != 0)
         {

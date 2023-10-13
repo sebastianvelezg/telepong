@@ -65,3 +65,73 @@ Una vez que ambos clientes estén conectados y hayan elegido a su jugador, el ju
 - `game_loop(void*)`: Bucle principal del juego que actualiza el estado del juego y lo transmite a los clientes.
 - `handle_client(void*)`: Maneja la comunicación con un solo cliente.
 - `main(int, char**)`: Punto de entrada. Inicia el servidor, escucha las conexiones entrantes de los clientes y crea hilos para manejar a los clientes.
+
+## **Protocolo del Juego de Ping Pong**
+
+Protocolo utilizado para la comunicación.
+
+### Mensajes de Registro y Autenticación
+
+- `PLAYER1`: Solicitud para registrarse como el jugador 1.
+- `PLAYER2`: Solicitud para registrarse como el jugador 2.
+- `Player` in use: Indica que el rol de jugador solicitado ya está ocupado.
+- `Player` accepted: Confirma que el rol de jugador ha sido aceptado.
+- `REGISTRATION`:NICKNAME:<nickname>:EMAIL:<email>: Registro del jugador con un nickname y correo electrónico.
+
+### Estado del Juego
+
+- `WAITING`: Esperando al otro jugador para comenzar.
+- `READY`: Ambos jugadores están listos para comenzar el juego.
+- `STATE`:P1:<y-pos>,P2:<y-pos>,BALL:<x-pos>:<y-pos>,SCORE:P1:<score1>:P2:<score2>,NICKS:<nick1>:<nick2>:
+- `Mensaje` de estado que describe la posición actual de los jugadores y la pelota, junto con el puntaje actual y los nicknames de los jugadores.
+- `GAME`:OVER: Notificación de que el juego ha terminado.
+
+### Acciones de Jugador
+
+- `ACTION`:UP: Movimiento hacia arriba del jugador.
+- `ACTION`:DOWN: Movimiento hacia abajo del jugador.
+
+## **Desarrollo**
+
+### Definiciones iniciales:
+
+- Se definen varias constantes como `SCREEN_WIDTH, SCREEN_HEIGHT, BALL_RADIUS, PADDLE_WIDTH, PADDLE_HEIGHT, PADDLE_SPEED, BALL_SPEED_X, BALL_SPEED_Y, WINNING_SCORE y MAX_CLIENTS`.
+- Se define un archivo `logfile` que se utilizará para registrar eventos del juego.
+- Se definen múltiples `pthread_mutex_t` y `pthread_cond_t` para manejar el acceso concurrente y la sincronización entre hilos.
+
+### Objetos del juego:
+
+- `Ball`: Este objeto se representa mediante la estructura Ball. Esta estructura contiene la posición (x, y) de la pelota en la pantalla, así como la dirección (dx, dy) en la que se está moviendo.
+
+- `Paddle`: El juego tiene dos paletas, cada una controlada por un jugador diferente. Estas paletas se representan mediante la estructura Paddle. Cada paleta tiene una posición (x, y) en la pantalla y una puntuación score.
+
+### Funciones de juego:
+
+- `check_game_end()`: Verifica si un jugador ha alcanzado la puntuación ganadora y reinicia el juego si es necesario.
+- `update()`: Actualiza las posiciones de los objetos en el juego, maneja las colisiones y verifica si un jugador ha marcado un punto.
+- `game_loop()`: Es el bucle principal del juego que continúa actualizando el juego y transmitiendo el estado del juego a los clientes.
+- `broadcast_game_state()`: Transmite el estado actual del juego a ambos clientes.
+
+### Funciones del servidor:
+
+- `handle_client()`: Esta función maneja la interacción con un cliente individual. Cada cliente se ejecuta en un hilo separado.
+- `main()`: Establece el servidor, espera conexiones de los clientes y crea un hilo por cliente. También inicia el hilo del bucle principal del juego.
+
+### Protocolo de comunicación:
+
+- Los clientes envían comandos como `ACTION:UP`, `ACTION:DOWN`, etc., que indican las acciones que los jugadores desean realizar.
+- El servidor transmite el estado del juego usando un formato específico que incluye la posición de los paddles, la posición y dirección del balón, la puntuación y los apodos de los jugadores.
+
+### Registro de eventos:
+
+- Los eventos importantes, como las colisiones del balón, las puntuaciones y los movimientos de los jugadores, se registran en un archivo de registro.
+
+## **Conclusiones**
+
+El desarrollo de este servidor requirió un conocimiento profundo de la programación de sockets, así como del funcionamiento interno de un juego en tiempo real. El uso de subprocesos permite que el servidor maneje múltiples conexiones de manera eficiente, lo cual es crucial para mantener una experiencia de juego fluida para los jugadores.
+
+El juego, aunque sea un poco simple, presenta muchos de los desafíos fundamentales de la programación de juegos en línea, como sincronizar estados entre clientes, administrar conexiones entrantes y salientes y actualizar y transmitir de manera eficiente el estado del juego.
+
+El mayor desafío al desarrollar este servidor fue garantizar que los movimientos y acciones de un jugador se reflejaran en tiempo real en el juego del otro jugador. Cualquier retraso o desincronización habría afectado el juego. Además, una gestión adecuada de registros y errores es esencial para diagnosticar problemas y garantizar un juego ininterrumpido.
+
+En general, desarrollar este servidor fue una experiencia valiosa que demostró complejidad, El servidor resultante es robusto, eficiente y proporciona una base sólida sobre la cual construir y expandirse en el futuro.

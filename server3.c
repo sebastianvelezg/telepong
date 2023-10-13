@@ -75,7 +75,6 @@ void check_game_end()
         }
         pthread_mutex_unlock(&clients_mutex);
 
-        // Reset game state
         paddle1.score = 0;
         paddle2.score = 0;
         ball.x = SCREEN_WIDTH / 2;
@@ -91,7 +90,6 @@ void update()
     ball.x += ball.dx;
     ball.y += ball.dy;
 
-    // Collision with top and bottom
     if (ball.y <= 0 || ball.y >= SCREEN_HEIGHT)
     {
         log_event("Ball collided with top or bottom.");
@@ -99,7 +97,6 @@ void update()
         ball.dy = -ball.dy;
     }
 
-    // Collision with paddles
     if ((ball.dx < 0 && ball.x <= paddle1.x + PADDLE_WIDTH && ball.y >= paddle1.y && ball.y <= paddle1.y + PADDLE_HEIGHT) ||
         (ball.dx > 0 && ball.x >= paddle2.x && ball.y >= paddle2.y && ball.y <= paddle2.y + PADDLE_HEIGHT))
     {
@@ -108,7 +105,6 @@ void update()
         ball.dx = -ball.dx;
     }
 
-    // Ball goes out of bounds
     if (ball.x < 0)
     {
         log_event("Ball went out of bounds on the left.");
@@ -176,7 +172,6 @@ void *handle_client(void *socket_desc)
     char buffer[1024];
     char playerID[10] = {0};
 
-    // Receive playerID from the client
     memset(playerID, 0, sizeof(playerID));
     int bytes_received = recv(newSocket, playerID, sizeof(playerID) - 1, 0);
     if (bytes_received <= 0)
@@ -186,7 +181,6 @@ void *handle_client(void *socket_desc)
         pthread_exit(NULL);
     }
 
-    // Check which player the client wants to be and if that player is available
     if (strcmp(playerID, "PLAYER1") == 0)
     {
         if (player1_in_use)
@@ -216,7 +210,6 @@ void *handle_client(void *socket_desc)
         }
     }
 
-    // Wait for client's ready signal
     memset(buffer, 0, sizeof(buffer));
     if (recv(newSocket, buffer, 1024, 0) <= 0)
     {
@@ -235,15 +228,13 @@ void *handle_client(void *socket_desc)
             pthread_mutex_unlock(&game_start_mutex);
         }
 
-        // If only one client is ready, send waiting message
         while (clients_ready < MAX_CLIENTS)
         {
             send(newSocket, "WAITING", 8, 0);
-            usleep(500000); // Half a second delay to avoid flooding
+            usleep(500000);
         }
     }
 
-    // Add the client to the client_sockets array
     pthread_mutex_lock(&clients_mutex);
     for (int i = 0; i < MAX_CLIENTS; i++)
     {
@@ -264,7 +255,6 @@ void *handle_client(void *socket_desc)
     {
         memset(buffer, 0, sizeof(buffer));
 
-        // Handle client actions
         if (recv(newSocket, buffer, 1024, 0) <= 0)
         {
             printf("Client disconnected or error occurred.\n");
@@ -300,7 +290,6 @@ void *handle_client(void *socket_desc)
         }
     }
 
-    // Remove the client from the client_sockets array before exiting
     pthread_mutex_lock(&clients_mutex);
     for (int i = 0; i < MAX_CLIENTS; i++)
     {
@@ -384,7 +373,7 @@ int main(int argc, char *argv[])
             pthread_exit(NULL);
         }
 
-        char command[15]; // To hold the initial command (e.g., "REGISTRATION")
+        char command[15];
         char receivedNickname[50];
         char receivedEmail[100];
 
