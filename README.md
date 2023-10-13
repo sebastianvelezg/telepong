@@ -90,6 +90,10 @@ Protocolo utilizado para la comunicación.
 
 - `ACTION`:UP: Movimiento hacia arriba del jugador.
 - `ACTION`:DOWN: Movimiento hacia abajo del jugador.
+  
+![board-jocular-prankster](https://github.com/sebastianvelezg/telepong/assets/68916783/07099895-8283-4396-840c-2766c16852dc)
+![board-silly-cutup](https://github.com/sebastianvelezg/telepong/assets/68916783/20367305-5a4d-409a-825a-d9fa8e8ac2f8)
+
 
 ## **Desarrollo**
 
